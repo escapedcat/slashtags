@@ -28,6 +28,5 @@
     "paths": {
       "@synonymdev/slashtags-*": ["./packages/*"]
     }
-  },
-  "include": ["packages/*/src", "types"]
+  }
 }
