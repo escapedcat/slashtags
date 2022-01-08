@@ -28,10 +28,10 @@
   "scripts": {
     "lint": "standard ./src ./test --fix",
     "build": "rm -rf dist types && ipjs build && tsc && cp -r types/ dist/types",
-    "test": "hundreds ava",
+    "dep-check": "aegir dep-check",
     "prepublishOnly": "npm run lint && npm run build && npm run test && dependency-check dist --no-dev"
   },
   "dependencies": {
-    "@synonymdev/slashtags-rpc": "^0.1.1"
+    "@synonymdev/slashtags-rpc": "~0.1.1"
   }
 }
