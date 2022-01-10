@@ -1,4 +1,5 @@
-import { RPC } from '@synonymdev/slashtags-rpc'
+import { RPC } from '@synonymdev/slashtags-rpc';
+import { DHT } from '@synonymdev/slashtags-rpc/dht';
 
 /**
  * Create a new instance of Slashtags node.
@@ -7,7 +8,7 @@ import { RPC } from '@synonymdev/slashtags-rpc'
  * @returns {Promise<SlashtagsAPI>}
  */
 export const Core = async (opts) => {
-  return RPC({ relays: opts?.relays })
-}
+  return RPC(await DHT(), { relays: opts?.relays });
+};
 
 /** @typedef {import ('./interfaces').SlashtagsAPI} SlashtagsAPI */

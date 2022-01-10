@@ -1,94 +1,69 @@
-import test from 'ava'
-import { DHT } from '../src/dht.js'
-import Node from '@hyperswarm/dht'
+import { expect } from 'aegir/utils/chai.js'
+import b4a from 'b4a'
 
-const TESTING_RELAY_SERVER = 'wss://dht-relay.synonym.to/'
+const VALID_RELAY_SERVER = 'wss://dht-relay.synonym.to/'
 const INVALID_RELAY_SERVER = 'ws://invalid.something.net'
 
-const helperServerKey = async () => {
-  const node = new Node()
-  const server = node.createServer()
-  await server.listen()
-  return server.address().publicKey
-}
+const DHT_KEY = b4a.from(
+  '3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29',
+  'hex'
+)
 
-const helperConnect = async (key) => {
-  const node = new Node()
-  const noiseSocket = node.connect(key)
-  return noiseSocket.publicKey
-}
+/** @typedef {import ('../src/interfaces').DHT} DHT */
+/** @typedef {import ('../src/interfaces').DHTOpts} DHTOpts */
+/** @type {(opts?: DHTOpts)=> Promise<DHT>} */
+let DHT
 
-test('DHT: Create normal DHT node and connect to a running server', async (t) => {
-  const node = await DHT()
-
-  const key = await helperServerKey()
-
-  const noiseSocket = node.connect(key)
-
-  t.deepEqual(noiseSocket.remotePublicKey, key)
-})
-
-test('DHT: Create normal DHT node and accept a connection from other', async (t) => {
-  await new Promise((resolve) => {
-    DHT().then(async (node) => {
-      let remotePublicKey = null
-
-      const server = node.createServer((conn) => {
-        t.deepEqual(remotePublicKey, conn.remotePublicKey)
-        resolve()
-      })
-
-      await server.listen()
-      remotePublicKey = await helperConnect(server.address().publicKey)
-    })
-  })
-})
-
-test('DHT: Create relayed DHT node and connect to a running server', async (t) => {
-  const node = await DHT({ relays: [TESTING_RELAY_SERVER] })
-
-  const key = await helperServerKey()
-
-  const noiseSocket = node.connect(key)
-
-  t.deepEqual(noiseSocket.remotePublicKey, key)
-})
-
-test('DHT: Create relayed DHT node and accept a connection from other', async (t) => {
-  await new Promise((resolve) => {
-    DHT({ relays: [TESTING_RELAY_SERVER] }).then(async (node) => {
-      let remotePublicKey = null
-
-      const server = node.createServer((conn) => {
-        t.deepEqual(remotePublicKey, conn.remotePublicKey)
-        resolve()
-      })
-
-      await server.listen()
-
-      remotePublicKey = await helperConnect(server.address().publicKey)
-    })
-  })
-})
-
-test('DHT: Try relay servers until one is working', async (t) => {
-  const node = await DHT({
-    relays: [INVALID_RELAY_SERVER, TESTING_RELAY_SERVER]
-  })
-
-  const key = await helperServerKey()
-
-  const noiseSocket = node.connect(key)
-
-  t.deepEqual(noiseSocket.remotePublicKey, key)
-})
-
-test('DHT: Throw an error if no relays worked', async (t) => {
-  await t.throwsAsync(
-    async () => await DHT({ relays: [INVALID_RELAY_SERVER] }),
-    {
-      instanceOf: Error,
-      message: 'Could not connect to any of the provided DHT relays'
+describe('DHT', () => {
+  before(async () => {
+    if (process.title === 'node') {
+      DHT = (await import('../src/dht.js')).DHT
+    } else {
+      DHT = (await import('../src/dht.browser.js')).DHT
     }
-  )
+  })
+
+  it('Connect to a running node', async () => {
+    const node = await DHT()
+    const noiseSocket = node.connect(DHT_KEY)
+
+    expect(noiseSocket.remotePublicKey).to.equal(DHT_KEY)
+    node.destroy()
+  })
+
+  it('Create DHT node and accept a connection from another', async () => {
+    const node1 = await DHT()
+    const node2 = await DHT()
+    const noiseSocket = node2.connect(node1.defaultKeyPair.publicKey)
+
+    expect(noiseSocket.remotePublicKey).to.equal(
+      node1.defaultKeyPair.publicKey
+    )
+    expect(node1.defaultKeyPair.publicKey).to.not.equal(
+      node2.defaultKeyPair.publicKey
+    )
+
+    node1.destroy()
+    node2.destroy()
+  })
+
+  it('Try relay servers until one is working', async () => {
+    const node = await DHT({
+      relays: [INVALID_RELAY_SERVER, VALID_RELAY_SERVER]
+    })
+    const noiseSocket = node.connect(DHT_KEY)
+
+    expect(noiseSocket.remotePublicKey).to.equal(DHT_KEY)
+    node.destroy()
+  })
+
+  it('Throws an error if no relays worked', async () => {
+    try {
+      await DHT({ relays: [INVALID_RELAY_SERVER] })
+    } catch (error) {
+      expect(error.message).to.equal(
+        'Could not connect to any of the DHT relays'
+      )
+    }
+  })
 })

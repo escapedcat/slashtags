@@ -1,4 +1,3 @@
-import { DHT } from './dht.js'
 import { Engine } from './engine.js'
 import b4a from 'b4a'
 
@@ -6,14 +5,14 @@ import b4a from 'b4a'
 const TIMEOUT = 2 * 60 * 1000
 
 /**
+ * @param {DHT} node
  * @param {object} [opts]
  * @param {string[]} [opts.relays]
  * @param {number} [opts.requestTimout]
  * @returns {Promise<SlashtagsRPC>}
  */
-export const RPC = async (opts) => {
+export const RPC = async (node, opts) => {
   const engine = await new Engine()
-  const node = await DHT(opts)
 
   const server = node.createServer((noiseSocket) =>
     noiseSocket.on('data', (data) => engine.handleRaw(data, noiseSocket))
@@ -104,5 +103,8 @@ export const RPC = async (opts) => {
   }
 }
 
-/** @typedef {import ('./interfaces').SlashtagsRPC} SlashtagsRPC */
-/** @typedef {import ('./interfaces').NoiseSocket} NoiseSocket */
+/**
+ * @typedef {import ('./interfaces').SlashtagsRPC} SlashtagsRPC
+ * @typedef {import ('./interfaces').NoiseSocket} NoiseSocket
+ * @typedef {import('./interfaces').DHT} DHT
+ */

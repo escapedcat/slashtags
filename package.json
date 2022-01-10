@@ -9,19 +9,18 @@
     "p2p"
   ],
   "homepage": "https://github.com/synonymdev/slashtags/tree/master/#readme",
-  "bugs": {
-    "url": "https://github.com/synonymdev/slashtags/issues"
-  },
+  "bugs": "https://github.com/synonymdev/slashtags/issues",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/synonymdev/slashtags.git"
   },
   "scripts": {
-    "postinstall": "lerna link && lerna bootstrap && rm packages/*/package-lock.json",
+    "link": "lerna link",
     "test": "lerna exec npm t",
     "lint": "lerna run lint",
     "build": "lerna run build",
+    "dep-check": "lerna run dep-check",
     "publish": "lerna publish",
     "clean": "npm run clean:deps && npm run clean:build && npm run clean:coverage && npm run clean:types",
     "clean:build": "rm -rf ./packages/*/dist",
@@ -32,20 +31,14 @@
     "full-check": "npm run clean && npm i && npm run check-prepublish"
   },
   "devDependencies": {
-    "@types/node": "^16.7.13",
-    "ava": "^3.15.0",
-    "dependency-check": "^4.1.0",
-    "hundreds": "^0.0.9",
-    "ipjs": "^5.1.0",
-    "lerna": "^4.0.0",
-    "standard": "^16.0.3",
-    "typescript": "^4.2.4"
+    "c8": "^7.11.0",
+    "lerna": "^4.0.0"
   },
   "workspaces": [
     "./packages/*"
   ],
   "engines": {
-    "node": ">=14.0.0",
     "npm": ">=7.0.0"
-  }
+  },
+  "private": true
 }
